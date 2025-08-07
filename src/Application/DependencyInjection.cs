@@ -34,6 +34,7 @@ namespace Application
             });
 
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IComandaService, ComandaService>();
 
             return services;
         }

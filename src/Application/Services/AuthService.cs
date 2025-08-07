@@ -28,8 +28,6 @@ namespace Application.Services
 
             var user = new User
             {
-                Nome = request.Nome,
-                Telefone = request.Telefone,
                 Username = request.Username,
                 PasswordHash = hashedPassword
             };
