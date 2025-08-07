@@ -113,6 +113,88 @@ namespace Application.Services
             return await GetById(comanda.Id);
         }
 
+        public async Task<ComandaResponse?> UpdateAsync(int id, UpdateComandaRequest request)
+        {
+            var comanda = await _context.Comandas
+                .Include(c => c.ComandasProdutos)
+                    .ThenInclude(cp => cp.Produto)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (comanda is null)
+                return null;
+
+            comanda.IdUsuario = request.IdUsuario ?? comanda.IdUsuario;
+            comanda.NomeUsuario = request.NomeUsuario ?? comanda.NomeUsuario;
+            comanda.TelefoneUsuario = request.TelefoneUsuario ?? comanda.TelefoneUsuario;
+
+            if (request.Produtos is not null)
+            {
+                var idsEnviados = request.Produtos.Select(p => p.Id).ToHashSet();
+
+                var produtosParaRemover = comanda.ComandasProdutos
+                    .Where(cp => !idsEnviados.Contains(cp.ProdutoId))
+                    .ToList();
+
+                _context.ComandasProdutos.RemoveRange(produtosParaRemover);
+
+                foreach (var produtoReq in request.Produtos)
+                {
+                    var produto = await _context.Produtos.FindAsync(produtoReq.Id);
+
+                    if (produto is null)
+                    {
+                        produto = new Produto
+                        {
+                            Nome = produtoReq.Nome,
+                            Preco = produtoReq.Preco
+                        };
+                        _context.Produtos.Add(produto);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        produto.Nome = produtoReq.Nome;
+                        produto.Preco = produtoReq.Preco;
+                        _context.Produtos.Update(produto);
+                    }
+
+                    var existe = comanda.ComandasProdutos.Any(cp => cp.ProdutoId == produto.Id);
+
+                    if (!existe)
+                    {
+                        var novaRelacao = new ComandaProduto
+                        {
+                            ComandaId = comanda.Id,
+                            ProdutoId = produto.Id
+                        };
+
+                        _context.ComandasProdutos.Add(novaRelacao);
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            var comandaAtualizada = await _context.Comandas
+                .Include(c => c.ComandasProdutos)
+                    .ThenInclude(cp => cp.Produto)
+                .FirstOrDefaultAsync(c => c.Id == comanda.Id);
+
+            return new ComandaResponse
+            {
+                Id = comandaAtualizada!.Id,
+                IdUsuario = comandaAtualizada.IdUsuario,
+                NomeUsuario = comandaAtualizada.NomeUsuario,
+                TelefoneUsuario = comandaAtualizada.TelefoneUsuario,
+                Produtos = comandaAtualizada.ComandasProdutos.Select(cp => new ProdutoResponse
+                {
+                    Id = cp.Produto.Id,
+                    Nome = cp.Produto.Nome,
+                    Preco = cp.Produto.Preco
+                }).ToList()
+            };
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var comanda = await _context.Comandas

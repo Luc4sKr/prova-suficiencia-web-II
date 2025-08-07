@@ -1,10 +1,11 @@
 ﻿using Domain.Abstractions;
 using Domain.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("RestAPIFurb")]
     public class ComandaController : ControllerBase
@@ -64,9 +65,21 @@ namespace Api.Controllers
         }
 
         [HttpPut("comandas/{id}")]
-        public async Task Update()
+        public async Task<ActionResult<ComandaResponse>> Update(int id, UpdateComandaRequest request)
         {
+            try
+            {
+                var result = await _comandaService.UpdateAsync(id, request);
 
+                if (result == null)
+                    return NotFound();
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest();
+            }
         }
 
         [HttpDelete("comandas/{id}")]
@@ -79,7 +92,14 @@ namespace Api.Controllers
                 if (!success)
                     return BadRequest();
 
-                return Ok();
+                return Ok(
+                    new
+                    {
+                        success = new
+                        {
+                            text = "comanda removida"
+                        },
+                    });
             }
             catch (Exception ex)
             {
