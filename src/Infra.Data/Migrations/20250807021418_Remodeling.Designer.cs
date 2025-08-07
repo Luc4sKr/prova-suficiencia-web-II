@@ -2,6 +2,7 @@
 using Infra.Data.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infra.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250807021418_Remodeling")]
+    partial class Remodeling
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,7 +64,8 @@ namespace Infra.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ComandaId");
+                    b.HasIndex("ComandaId")
+                        .IsUnique();
 
                     b.HasIndex("ProdutoId");
 
@@ -112,13 +116,13 @@ namespace Infra.Data.Migrations
             modelBuilder.Entity("Domain.Models.ComandaProduto", b =>
                 {
                     b.HasOne("Domain.Models.Comanda", "Comanda")
-                        .WithMany("ComandasProdutos")
-                        .HasForeignKey("ComandaId")
+                        .WithOne("ComandaProduto")
+                        .HasForeignKey("Domain.Models.ComandaProduto", "ComandaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Models.Produto", "Produto")
-                        .WithMany("ComandasProdutos")
+                        .WithMany()
                         .HasForeignKey("ProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -130,12 +134,8 @@ namespace Infra.Data.Migrations
 
             modelBuilder.Entity("Domain.Models.Comanda", b =>
                 {
-                    b.Navigation("ComandasProdutos");
-                });
-
-            modelBuilder.Entity("Domain.Models.Produto", b =>
-                {
-                    b.Navigation("ComandasProdutos");
+                    b.Navigation("ComandaProduto")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

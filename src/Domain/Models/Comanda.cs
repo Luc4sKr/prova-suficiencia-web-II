@@ -4,7 +4,10 @@
     {
         public int Id { get; set; }
 
-        public virtual User User { get; set; }
-        public virtual ComandaProduto ComandaProduto { get; set; }
+        public int IdUsuario { get; set; }
+        public string NomeUsuario { get; set; }
+        public string TelefoneUsuario { get; set; }
+
+        public virtual List<ComandaProduto> ComandasProdutos { get; set; }
     }
 }
